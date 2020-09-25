@@ -238,7 +238,7 @@ bool extract_replacement( const char ** const ibufpp, const bool isglobal )
       {
       /* not reached if isglobal; in command-list, newlines are unescaped */
       int size = 0;
-      *ibufpp = get_stdin_line( &size );
+      *ibufpp = get_stdin_line( &size, true );
       if( !*ibufpp ) return false;			/* error */
       if( size <= 0 ) return false;			/* EOF */
       }

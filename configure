@@ -6,7 +6,7 @@
 # to copy, distribute, and modify it.
 
 pkgname=ed
-pkgversion=1.16
+pkgversion=1.16-readline
 progname=ed
 srctrigger=doc/${pkgname}.texi
 
@@ -24,8 +24,8 @@ program_prefix=
 CC=gcc
 CPPFLAGS=
 CFLAGS='-Wall -W -O2'
-LDFLAGS=
-
+LDFLAGS=''
+LIBS='-lreadline'
 # checking whether we are using GNU C.
 /bin/sh -c "${CC} --version" > /dev/null 2>&1 ||
 	{
@@ -196,6 +196,7 @@ CC = ${CC}
 CPPFLAGS = ${CPPFLAGS}
 CFLAGS = ${CFLAGS}
 LDFLAGS = ${LDFLAGS}
+LIBS= ${LIBS}
 EOF
 cat "${srcdir}/Makefile.in" >> Makefile
 

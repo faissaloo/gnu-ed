@@ -2,6 +2,7 @@
 /*  GNU ed - The GNU line editor.
     Copyright (C) 1993, 1994 Andrew Moore, Talke Studio
     Copyright (C) 2006-2020 Antonio Diaz Diaz.
+    Copyright (C) 2020 Faissal Isslam Bensefia.
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,6 +21,10 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <malloc.h>
+
+#include <readline/readline.h>
+#include <readline/history.h>
 
 #include "ed.h"
 
@@ -126,7 +131,7 @@ bool get_extended_line( const char ** const ibufpp, int * const lenp,
   while( true )
     {
     int len2;
-    const char * const s = get_stdin_line( &len2 );
+    const char * const s = get_stdin_line( &len2, true );
     if( !s ) return false;			/* error */
     if( len2 <= 0 ) return false;		/* EOF */
     if( !resize_buffer( &buf, &bufsz, len + len2 + 1 ) ) return false;
@@ -143,46 +148,51 @@ bool get_extended_line( const char ** const ibufpp, int * const lenp,
   }
 
 
+void configure_input() {
+  rl_bind_key('\t', rl_insert);
+  stifle_history(1000); //We should have an .edrc at some point to change this
+}
 /* Read a line of text from stdin.
    Incomplete lines (lacking the trailing newline) are discarded.
    Returns pointer to buffer and line size (including trailing newline),
    or 0 if error, or *sizep = 0 if EOF */
-const char * get_stdin_line( int * const sizep )
-  {
-  static char * buf = 0;
-  static int bufsz = 0;
-  int i = 0;
-
-  while( true )
-    {
-    const int c = getchar();
-    if( !resize_buffer( &buf, &bufsz, i + 2 ) ) { *sizep = 0; return 0; }
-    if( c == EOF )
-      {
-      if( ferror( stdin ) )
-        {
-        show_strerror( "stdin", errno );
-        set_error_msg( "Cannot read stdin" );
-        clearerr( stdin );
-        *sizep = 0; return 0;
-        }
-      if( feof( stdin ) )
-        {
-        set_error_msg( "Unexpected end-of-file" );
-        clearerr( stdin );
-        buf[0] = 0; *sizep = 0; if( i > 0 ) ++linenum_;	/* discard line */
-        return buf;
-        }
-      }
-    else
-      {
-      buf[i++] = c; if( !c ) set_binary(); if( c != '\n' ) continue;
-      ++linenum_; buf[i] = 0; *sizep = i;
-      return buf;
-      }
-    }
-  }
-
+const char * get_stdin_line( int * const sizep, const bool appending_lines )
+ {   
+   static char* buf;
+   static char* historical_buffer;
+   //free what was previously allocated to buf, GNU readline will allocate a new appropriately sized buffer
+   free(buf);
+   
+   const char* input_prefix;
+   if (appending_lines) {
+     input_prefix = "> ";
+   } else {
+     input_prefix = "[ed] ";
+   }
+   buf = readline(input_prefix);
+   
+   if (buf != NULL) {
+     historical_buffer = malloc(strlen(buf)+1);
+     strcpy(historical_buffer, buf);
+     add_history(historical_buffer);
+     
+     //Add a new line because the rest of the program was built with the assumption
+     //that this string would be newline terminated and changing that would be
+     //a nightmare
+     *sizep = strlen(buf)+1;
+     buf[(*sizep)-1]='\n';
+   } else {
+     *sizep = 0;
+   }
+   
+   /*
+   if (*sizep > 0) {
+     We should only add the version of the string without the newline here
+     
+   }
+   */
+   return buf;
+ }
 
 /* Read a line of text from a stream.
    Returns pointer to buffer and line size (including trailing newline

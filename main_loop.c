@@ -664,7 +664,7 @@ static bool exec_global( const char ** const ibufpp, const int pflags,
       int len = 0;
       if( !print_lines( current_addr(), current_addr(), pflags ) )
         return false;
-      *ibufpp = get_stdin_line( &len );
+      *ibufpp = get_stdin_line( &len, false );
       if( !*ibufpp ) return false;			/* error */
       if( len <= 0 ) return false;			/* EOF */
       if( len == 1 && strcmp( *ibufpp, "\n" ) == 0 ) continue;
@@ -700,6 +700,8 @@ int main_loop( const bool loose )
 
   disable_interrupts();
   set_signals();
+  configure_input();
+  
   status = setjmp( jmp_state );
   if( !status ) enable_interrupts();
   else { status = -1; fputs( "\n?\n", stdout ); set_error_msg( "Interrupt" ); }
@@ -709,7 +711,7 @@ int main_loop( const bool loose )
     fflush( stdout ); fflush( stderr );
     if( status < 0 && verbose ) { printf( "%s\n", errmsg ); fflush( stdout ); }
     if( prompt_on ) { fputs( prompt_str, stdout ); fflush( stdout ); }
-    ibufp = get_stdin_line( &len );
+    ibufp = get_stdin_line( &len, false );
     if( !ibufp ) return 2;			/* an error happened */
     if( len <= 0 )				/* EOF on stdin ('q') */
       {

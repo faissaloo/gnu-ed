@@ -96,9 +96,11 @@ bool set_active_node( const line_t * const lp );
 void unset_active_nodes( const line_t * bp, const line_t * const ep );
 
 /* defined in io.c */
+void configure_input();
+
 bool get_extended_line( const char ** const ibufpp, int * const lenp,
                         const bool strip_escaped_newlines );
-const char * get_stdin_line( int * const sizep );
+const char * get_stdin_line( int * const sizep, const bool appending_lines );
 int linenum( void );
 bool print_lines( int from, const int to, const int pflags );
 int read_file( const char * const filename, const int addr );

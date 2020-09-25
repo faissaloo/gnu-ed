@@ -115,7 +115,7 @@ bool append_lines( const char ** const ibufpp, const int addr,
     {
     if( !isglobal )
       {
-      *ibufpp = get_stdin_line( &size );
+      *ibufpp = get_stdin_line( &size, true );
       if( !*ibufpp ) return false;			/* error */
       if( size <= 0 ) return true;			/* EOF */
       }
